@@ -11,7 +11,6 @@ gemfile(true) do
 
   gem "sqlite3", "~> 1.4"
   gem 'graphql-batch'
-  gem "rspec-rails"
 end
 
 require "active_record"
