@@ -66,25 +66,17 @@ class RecordLoader < GraphQL::Batch::Loader
     super(@column_type.cast(key))
   end
 
+  # fixed
   def perform(keys)
     records_hash = query(keys).each_with_object({}) do |record, obj|
-      column_value = column_value_from(record)
+      column_value = record.public_send(@column)
       obj[column_value] ||= []
       obj[column_value] << record
     end
-
-    keys.each { |key| fulfill(key, (records_hash[key] || [])) }
+    keys.each { |key| fulfill(key, (records_hash[key] || [])) unless fulfilled?(key) }
   end
 
   private
-
-  def column_value_from(record)
-    column_value = record
-    ["post_id"].each do |attr_field|
-      column_value = column_value.public_send(attr_field)
-    end
-    column_value
-  end
 
   def query(keys)
     scope = @model
