@@ -54,12 +54,12 @@ end
 
 # https://github.com/Shopify/graphql-batch/blob/main/examples/record_loader.rb
 class RecordLoader < GraphQL::Batch::Loader
-  def initialize(model, column: model.primary_key, **active_record_methods)
+  def initialize(model, column: model.primary_key, where: nil)
     super()
     @model = model
     @column = column.to_s
-    @column_type, @attr_fields = column_type_and_attr_fields
-    @active_record_methods = active_record_methods
+    @column_type = model.type_for_attribute(@column)
+    @where = where
   end
 
   def load(key)
@@ -80,21 +80,10 @@ class RecordLoader < GraphQL::Batch::Loader
 
   def column_value_from(record)
     column_value = record
-    @attr_fields.each do |attr_field|
+    ["post_id"].each do |attr_field|
       column_value = column_value.public_send(attr_field)
     end
     column_value
-  end
-
-  def column_type_and_attr_fields
-    return [@model.type_for_attribute(@column), [@column]] unless @model.column_for_attribute(@column).is_a?(ActiveRecord::ConnectionAdapters::NullColumn)
-
-    association_table, association_column = @column.split('.')
-    association = @model.reflections.values.find { |rv| rv.plural_name == association_table }
-
-    raise ArgumentError, "No association from #{association_table} on #{@model}" if association.nil?
-
-    [association.klass.type_for_attribute(association_column), [association.name, association_column]]
   end
 
   def query(keys)
